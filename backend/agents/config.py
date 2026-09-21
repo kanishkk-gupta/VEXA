@@ -204,6 +204,15 @@ class LLMFactory:
                         err_str = str(e).lower()
                         is_rate_limit = "rate limit" in err_str or "429" in err_str
                         is_quota = "tokens per day" in err_str or "tpd" in err_str
+                        is_tool_choice_error = "tool choice is none" in err_str
+
+                        if is_tool_choice_error:
+                            _log.warning("Groq strict tool_choice error intercepted. Retrying without tools.")
+                            if "tools" in kwargs:
+                                del kwargs["tools"]
+                            if "tool_choice" in kwargs:
+                                del kwargs["tool_choice"]
+                            continue  # Retry immediately with tools stripped
 
                         if not is_rate_limit and not is_quota:
                             raise e  # Not a rate limit — propagate immediately

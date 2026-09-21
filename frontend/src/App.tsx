@@ -56,7 +56,7 @@ function App() {
         const run = await VexaApi.getAgentRun(activeRunId);
         if (isPolling) {
           setRunState(run);
-          if (run.status === 'completed' || run.status === 'failed') {
+          if (run.status === 'completed' || run.status === 'failed' || run.status === 'partial') {
             isPolling = false;
             setActiveRunId(null);
             // Fetch final diff
