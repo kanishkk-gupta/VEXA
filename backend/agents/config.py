@@ -298,7 +298,9 @@ class LLMFactory:
                     if attempt == retries - 1:
                         raise e
 
-                    wait = 20
+                    # Use a shorter wait (2s) if we are on Mistral (fallback) since it's just a 1 RPS limit.
+                    # Use a longer wait (20s) if we are on Groq since it's a TPM limit.
+                    wait = 2 if _state.get("using_fallback") else 20
                     logging.getLogger(__name__).warning(
                         "CrewAI LLM call rate limit hit (attempt %d/%d). Sleeping %ds...",
                         attempt + 1, retries, wait

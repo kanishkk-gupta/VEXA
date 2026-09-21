@@ -607,6 +607,16 @@ class SoftwareEngineeringCrew:
         ctx.agent_started("ProjectAnalyst")
         t = time.perf_counter()
         logger.info("agent_started | run=%s agent=ProjectAnalyst", ctx.run_id)
+        
+        # Pre-fetch the file tree to save the agent a tool call
+        try:
+            from backend.tools.filesystem import FileSystemTools
+            fs = FileSystemTools()
+            tree = fs.list_files(ctx.workspace_id, "")
+            file_tree_str = "\n".join([f"- {f.path}" for f in tree.files]) if tree.files else "Workspace is empty."
+        except Exception:
+            file_tree_str = "Could not retrieve file tree."
+
         try:
             tools = self._make_crewai_tools(kit.for_project_analyst())
             agent = self._make_agent(
@@ -617,7 +627,8 @@ class SoftwareEngineeringCrew:
             )
             task = self._make_task(
                 description=PROJECT_ANALYST_TASK.format(
-                    requirement_analysis=req.model_dump_json(indent=2)
+                    requirement_analysis=req.model_dump_json(indent=2),
+                    file_tree=file_tree_str
                 ),
                 agent=agent,
                 expected_output="JSON object with project analysis",

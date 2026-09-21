@@ -94,12 +94,13 @@ Inspect the software project in the workspace and produce a structured analysis.
 TASK CONTEXT:
 {requirement_analysis}
 
+CURRENT PROJECT FILES:
+{file_tree}
+
 Use your available tools in this order:
-1. inspect_project — get the project overview
-2. list_files — list all files
-3. read_file — read files that appear relevant to the task
-4. search_code — search for relevant function/class names from the requirements
-5. git_status — check current repository state
+1. read_file — read files that appear relevant to the task (if they exist in the project files list above)
+2. search_code — search for relevant function/class names from the requirements
+3. git_status — check current repository state
 
 Your output MUST be a raw text JSON object (Do NOT attempt to call a tool named 'json'):
 {{

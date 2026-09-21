@@ -48,6 +48,9 @@ class AgentRunRequest(BaseModel):
         default="mock",
         description="Mode of execution: 'mock' (deterministic logic tests) or 'real' (live LLM).",
     )
+    llm_model: str | None = Field(default=None, description="Optional LiteLLM model string override")
+    llm_api_key: str | None = Field(default=None, description="Optional primary API key override")
+    llm_fallback_api_key: str | None = Field(default=None, description="Optional fallback API key override")
 
 
 class AgentRunResponse(BaseModel):
@@ -90,7 +93,16 @@ def submit_agent_run(body: AgentRunRequest) -> AgentRunResponse:
     logger.info("agent_run_requested | workspace=%s mode=%s req=%s", body.workspace_id, body.execution_mode, body.requirement[:80])
 
     try:
-        crew = SoftwareEngineeringCrew(tool_service=_svc)
+        from backend.agents.config import get_agent_settings
+        settings = get_agent_settings()
+        if body.llm_model:
+            settings.llm_model = body.llm_model
+        if body.llm_api_key:
+            settings.llm_api_key = body.llm_api_key
+        if body.llm_fallback_api_key:
+            settings.llm_fallback_api_key = body.llm_fallback_api_key
+
+        crew = SoftwareEngineeringCrew(tool_service=_svc, settings=settings)
         run_result = crew.run_task(
             workspace_id=body.workspace_id,
             requirement=body.requirement,
@@ -145,7 +157,16 @@ def submit_agent_run_async(body: AgentRunRequest, bg_tasks: BackgroundTasks) -> 
     ctx.execution_mode = body.execution_mode
     _run_store[run_id] = ctx
     
-    crew = SoftwareEngineeringCrew(tool_service=_svc)
+    from backend.agents.config import get_agent_settings
+    settings = get_agent_settings()
+    if body.llm_model:
+        settings.llm_model = body.llm_model
+    if body.llm_api_key:
+        settings.llm_api_key = body.llm_api_key
+    if body.llm_fallback_api_key:
+        settings.llm_fallback_api_key = body.llm_fallback_api_key
+
+    crew = SoftwareEngineeringCrew(tool_service=_svc, settings=settings)
     bg_tasks.add_task(_execute_async_run, ctx, crew, body.execution_mode)
 
     return _format_run_response(run_id, ctx)

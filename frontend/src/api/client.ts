@@ -94,11 +94,25 @@ export const VexaApi = {
     };
   },
 
-  submitAgentRunAsync: async (workspace_id: string, requirement: string, execution_mode: string): Promise<AgentRunResponse> => {
+  submitAgentRunAsync: async (
+    workspace_id: string,
+    requirement: string,
+    execution_mode: string = 'mock',
+    llm_model?: string,
+    llm_api_key?: string,
+    llm_fallback_api_key?: string
+  ): Promise<AgentRunResponse> => {
     const response = await fetch(`${API_BASE_URL}/agent-runs/async`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ workspace_id, requirement, execution_mode })
+      body: JSON.stringify({
+        workspace_id,
+        requirement,
+        execution_mode,
+        llm_model: llm_model || undefined,
+        llm_api_key: llm_api_key || undefined,
+        llm_fallback_api_key: llm_fallback_api_key || undefined
+      })
     });
     if (!response.ok) {
         const err = await response.json().catch(() => ({}));

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Activity, Server, FileCode, CheckCircle, XCircle, Loader2, GitCommit, RefreshCw, Terminal, LayoutPanelLeft, Code2, MonitorPlay } from 'lucide-react';
+import { Play, Activity, Server, FileCode, CheckCircle, XCircle, Loader2, GitCommit, RefreshCw, Terminal, LayoutPanelLeft, Code2, MonitorPlay, Settings } from 'lucide-react';
 import { VexaApi } from './api/client';
 import type { Workspace, AgentRunResponse } from './api/client';
 import { CodeEditor } from './CodeEditor';
@@ -24,6 +24,9 @@ function App() {
   const [outputPath, setOutputPath] = useState('');
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [workspaceCreateError, setWorkspaceCreateError] = useState<string | null>(null);
+  const [llmModel, setLlmModel] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [fallbackApiKey, setFallbackApiKey] = useState('');
   
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [runState, setRunState] = useState<AgentRunResponse | null>(null);
@@ -91,9 +94,15 @@ function App() {
     setRunState(null);
     setDiff(null);
     try {
-      // In a real scenario we'd pass provider down, but our API uses env/config for provider in M3.5.1
-      // We pass execution_mode
-      const res = await VexaApi.submitAgentRunAsync(selectedWorkspace, requirement, executionMode);
+      // We pass execution_mode and overrides
+      const res = await VexaApi.submitAgentRunAsync(
+        selectedWorkspace, 
+        requirement, 
+        executionMode,
+        llmModel || undefined,
+        apiKey || undefined,
+        fallbackApiKey || undefined
+      );
       setActiveRunId(res.run_id);
     } catch (err: any) {
       alert(`Error starting run: ${err.message}`);
@@ -243,16 +252,63 @@ function App() {
                   <option value="real">Real (Live LLM)</option>
                 </select>
               </div>
-              <div className="flex flex-col space-y-2">
-                <label className="text-sm text-vexa-muted">Provider (Config)</label>
-                <select 
-                  className="bg-vexa-panel border border-vexa-border p-2 rounded focus:outline-none focus:border-vexa-accent opacity-50 cursor-not-allowed"
-                  value={provider}
-                  disabled={true}
-                  title="Provider is currently set via VEXA_LLM_PROVIDER in the backend .env"
-                >
-                  <option value="openai">Environment Default</option>
-                </select>
+            </div>
+
+            {/* LLM Configuration Panel */}
+            <div className="flex flex-col space-y-3 mt-4 border border-vexa-border rounded p-4 bg-black/10">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-vexa-muted flex items-center space-x-2">
+                <Settings className="w-3 h-3" />
+                <span>LLM Configuration</span>
+              </h3>
+              
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs text-vexa-muted flex justify-between">
+                  <span>Model String</span>
+                  <span className="text-[10px] text-vexa-muted/50">Overrides .env default</span>
+                </label>
+                <div className="relative">
+                  <input
+                    list="models-list"
+                    className="w-full bg-vexa-bg border border-vexa-border p-2 rounded font-mono text-xs focus:outline-none focus:border-vexa-accent transition-colors"
+                    placeholder="e.g. groq/openai/gpt-oss-120b"
+                    value={llmModel}
+                    onChange={e => setLlmModel(e.target.value)}
+                    disabled={activeRunId !== null}
+                  />
+                  <datalist id="models-list">
+                    <option value="groq/llama-3.1-70b-versatile">[Free] Groq - Llama 3.1 70B</option>
+                    <option value="groq/llama-3.1-8b-instant">[Free] Groq - Llama 3.1 8B</option>
+                    <option value="groq/openai/gpt-oss-20b">[Custom] Groq - GPT OSS 20B</option>
+                    <option value="groq/openai/gpt-oss-120b">[Custom] Groq - GPT OSS 120B</option>
+                    <option value="gpt-4o-mini">[Paid] OpenAI - GPT-4o Mini</option>
+                    <option value="gpt-4o">[Paid] OpenAI - GPT-4o</option>
+                    <option value="anthropic/claude-3-5-sonnet-20241022">[Paid] Anthropic - Claude 3.5 Sonnet</option>
+                  </datalist>
+                </div>
+              </div>
+
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs text-vexa-muted">Primary API Key</label>
+                <input
+                  type="password"
+                  className="bg-vexa-bg border border-vexa-border p-2 rounded font-mono text-xs focus:outline-none focus:border-vexa-accent transition-colors"
+                  placeholder="Leave blank to use .env key"
+                  value={apiKey}
+                  onChange={e => setApiKey(e.target.value)}
+                  disabled={activeRunId !== null}
+                />
+              </div>
+
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs text-vexa-muted">Fallback API Key (Mistral)</label>
+                <input
+                  type="password"
+                  className="bg-vexa-bg border border-vexa-border p-2 rounded font-mono text-xs focus:outline-none focus:border-vexa-accent transition-colors"
+                  placeholder="Leave blank to use .env key"
+                  value={fallbackApiKey}
+                  onChange={e => setFallbackApiKey(e.target.value)}
+                  disabled={activeRunId !== null}
+                />
               </div>
             </div>
 
