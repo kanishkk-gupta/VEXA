@@ -198,7 +198,7 @@ The following features are **intentionally deferred** to later milestones:
 | Tool Layer & Sandbox | M2 | ✅ Complete |
 | Agent implementation (CrewAI) | M3 | ✅ Complete |
 | Frontend IDE & Dashboard | M10 | ✅ Complete |
-| Sequential architecture | M4 | 🚧 In Progress |
+| Sequential architecture | M4 | ✅ Complete |
 | Hierarchical architecture | M5 | ❌ Deferred |
 | Event-driven architecture | M6 | ❌ Deferred |
 | Project RAG | M7 | ❌ Deferred |
